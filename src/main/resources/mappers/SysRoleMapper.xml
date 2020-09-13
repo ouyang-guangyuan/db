@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.tedu.db.sys.mapper.SysRoleMapper">
+
+	<!-- 基于角色id查询所有的菜单id -->
+	<!-- List<Integer> listMenuIdByRoleId(@Param("roleIds")Integer[] roleIds) -->
+	<select id="listMenuIdByRoleId" resultType="java.lang.Integer">
+	    select 
+	        menu_id 
+	    from 
+	        sys_role_menus 
+	    where 
+	        role_id 
+	    in 
+	    <foreach collection="roleIds" 
+	        open="(" close=")"
+	        separator="," item="roleId">
+	        #{roleId}
+	    </foreach>
+	</select>
+	
+	<!-- 查询所有角色的id和name -->
+	<!-- List<SysRoleDO> listAllSysRole() -->
+	<select id="listAllSysRole" resultType="cn.tedu.db.sys.pojo.SysRoleDO">
+		select 
+			id, name 
+		from 
+			sys_roles
+	</select>
+	
+	<!-- 基于角色id查询对应数据条数 -->
+	<!-- int getRoleCount(@Param("roleIds")Integer[] roleIds) -->
+	<select id="getRoleCount" resultType="int">
+		select 
+			count(*) 
+		from 
+			sys_roles 
+		where 
+			id in
+		<foreach collection="roleIds" 
+			open="(" close=")" 
+			separator="," item="roleId">
+			#{roleId}
+		</foreach>
+	</select>
+
+
+	<!-- 基于角色id查询关联的菜单id -->
+	<!-- List<Integer> getMenuByRoleId(Integer roleId) -->
+	<select id="getMenuByRoleId" resultType="java.lang.Integer">
+		select
+			menu_id
+		from 
+			sys_role_menus
+		where
+			role_id=#{roleId}
+	</select>
+	
+	<!-- 更新菜单记录 -->
+	<!-- int updateSysRole(SysRoleDO sysRoleDO) -->
+	<update id="updateSysRole">
+		update 
+			sys_roles 
+		set 
+			name=#{name}, note=#{note}, 
+			modifiedTime=now(), modifiedUser=#{modifiedUser} 
+		where 
+			id=#{id}
+	</update>
+
+	<!-- 插入新的角色记录 -->
+	<!-- int insertSysRole(SysRoleDO sysRoleDO) -->
+	<insert id="insertSysRole" 
+		useGeneratedKeys="true" 
+		keyProperty="id">
+		insert into sys_roles (
+			name, note,
+			createdTime, modifiedTime,
+			createdUser, modifiedUser
+		) values(
+			#{name}, #{note},
+			now(), now(),
+			#{createdUser}, #{modifiedUser}
+		)
+	</insert>
+	
+	<!-- 插入角色菜单记录 -->
+	<!-- int insertRoleMenus(@Param("roleId")Integer roleId, 
+			@Param("menuIds")Integer[] menuIds) -->
+	<insert id="insertRoleMenus">
+		insert into sys_role_menus (
+			role_id, menu_id
+		) values 
+		<foreach collection="menuIds" 
+			separator="," item="menuId">
+			(#{roleId}, #{menuId})
+		</foreach>
+	</insert>
+	
+	
+
+	<!-- 基于条件删除角色记录 -->
+	<!-- int deleteSysRole(Integer roleId) -->
+	<delete id="deleteSysRole">
+		delete from sys_roles where id=#{roleId}
+	</delete>
+	
+	<!-- 基于条件删除角色菜单表中关联记录 -->
+	<!-- int deleteRoleMenu(Integer roleId) -->
+	<delete id="deleteRoleMenu">
+		delete from sys_role_menus where role_id=#{roleId}
+	</delete>
+	
+	<!-- 基于条件删除用户角色表中关联记录 -->
+	<!-- int deleteUserRole(Integer roleId) -->
+	<delete id="deleteUserRole">
+		delete from sys_user_roles where role_id=#{roleId}
+	</delete>
+	
+	<!-- 基于条件查询角色菜单表中关联记录条数 -->
+	<!-- int getRoleMenuCount(Integer roleId) -->
+	<select id="getRoleMenuCount" resultType="int">
+		select 
+			count(*) 
+		from 
+			sys_role_menus 
+		where 
+			role_id=#{roleId}
+	</select>
+	
+	<!-- 基于条件查询用户角色表中关联记录条数 -->
+	<!-- int getUserRoleCount(Integer roleId) -->
+	<select id="getUserRoleCount" resultType="int">
+		select 
+			count(*) 
+		from 
+			sys_user_roles
+		where 
+			role_id=#{roleId}
+	</select>
+
+	<sql id="queryWhereId">
+		from sys_roles 
+		<where>
+			<if test="name!=null and name!=''">
+				name like concat('%',#{name},'%') 
+			</if>
+		</where>
+	</sql>
+
+	<!-- 基于条件分页查询角色记录 -->
+	<!-- List<SysRoleDO> listSysRole(@Param("name")String name,
+			@Param("recordIndex")Integer recordIndex,
+			@Param("pageSize")Integer pageSize) -->
+	<select id="listSysRole" resultType="cn.tedu.db.sys.pojo.SysRoleDO">
+		select  * 
+		<include refid="queryWhereId"></include>
+		limit #{recordIndex},#{pageSize}
+	</select>		
+			
+			
+	
+	<!-- 基于条件查询角色记录条数 -->
+	<!-- Integer getRowCount(@Param("name")String name) -->
+	<select id="getRowCount" resultType="int">
+		select count(*) 
+		<include refid="queryWhereId"></include>
+	</select>
+	
+</mapper>
+
+
+

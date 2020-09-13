@@ -1,0 +1,122 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="box">
+			<div class="box-header">
+				<h3 class="box-title">用户管理</h3>
+
+				<div class="box-tools">
+					<div class="input-group input-group-sm" style="width: 350px;">
+						<input type="text" name="table_search" id="searchNameId"
+							class="form-control pull-right" placeholder="用户名">
+
+						<div class="input-group-btn">
+							<button type="button" class="btn btn-default btn-search">
+                                <i class="fa fa-search"></i>
+							</button>
+							<button type="button" class="btn btn-default btn-add">添加</button>
+							<button type="button" class="btn btn-default btn-update">修改</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /.box-header -->
+			<div class="box-body table-responsive no-padding">
+				<table class="table table-hover">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>用户名</th>
+							<th>部门</th>
+							<th>邮箱</th>
+							<th>手机号</th>
+							<th>状态</th>
+							<th>创建时间</th>
+							<th>修改时间</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyId"></tbody>
+				</table>
+			</div>
+			<div id="pageId" class="box-footer clearfix">
+			</div>
+			<!-- /.box-body -->
+		</div>
+		<!-- /.box -->
+	</div>
+</div>
+<script type="text/javascript">
+// 页面加载完成后，发送AJAX请求
+$(function(){
+	$(".btn-search").click(queryData);
+	
+	// 请求page.html的内容并显示
+	var page_url="common/page";
+	// 将findPageRecords作为当前AJAX的回调函数
+	$("#pageId").load(page_url,queryData);
+	
+	// 为添加按钮设置点击事件
+	$(".btn-add").click(function(){
+		var url="sys/user_edit";
+		$("#mainContentId").load(url);
+	});
+});
+	
+function queryData(){
+	findPageRecords(1);
+}
+
+// 发送AJAX请求，查询页面数据的方法
+function findPageRecords(pageCurrent){
+	// 获取页面上用户名输入框的值
+	var username=$("#searchNameId").val();// 默认是空字符串
+	
+	var user_list_url="user/findSysUser";
+	var params={
+			"username":username,
+			"currentPage":pageCurrent
+		}
+	$.getJSON(user_list_url,params,function(result){
+		if(result.state==20){// 正常响应
+			// 调用方法生成表格记录
+			createTableRows(result.data.pageRecords);
+			// 初始化分页工具栏
+			initPagination(result.data);
+		}else{// 异常响应
+			alert(result.message);
+		}
+	})
+}
+
+// 遍历生成表格中所有数据，并添加到表格中的方法
+function createTableRows(pageRecords){
+	var tbody=$("#tbodyId");// 获取tbody对象
+	tbody.empty();// 清空表格中原有数据
+	for(var index in pageRecords){
+		var record=pageRecords[index]; //数组中一条记录
+		var row=createRow(record);
+		// 将该行内容添加到表格对应位置
+		tbody.append(row);
+	}
+}
+
+// 拼接生成一行td内容的方法
+function createRow(record){
+	var row="<tr>"+
+	    "<td><input type='radio' name='userId' value='"+record.id+"'></td>"+
+		"<td>"+record.username+"</td>"+
+		"<td>"+record.deptName+"</td>"+
+		"<td>"+record.email+"</td>"+
+		"<td>"+record.mobile+"</td>"+
+		"<td>"+(record.valid==0?"禁用":"启用")+"</td>"+
+		"<td>"+record.createdTime+"</td>"+
+		"<td>"+record.modifiedTime+"</td>"+
+		"<td><button>"+(record.valid==0?"启用":"禁用")+"</button></td>"+
+	"</tr>";
+	return row;
+}
+</script>
+
+
+
+

@@ -1,0 +1,165 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="box">
+			<div class="box-header">
+				<h3 class="box-title">日志管理</h3>
+
+				<div class="box-tools">
+					<div class="input-group input-group-sm" style="width: 350px;">
+						<input type="text" name="table_search" id="searchNameId"
+							class="form-control pull-right" placeholder="用户名">
+
+						<div class="input-group-btn">
+							<button type="button" class="btn btn-default btn-search">
+                                <i class="fa fa-search"></i>
+							</button>
+							<button type="button" class="btn btn-default btn-delete">删除</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /.box-header -->
+			<div class="box-body table-responsive no-padding">
+				<table class="table table-hover">
+					<thead>
+						<tr>
+						    <th><input type="checkbox" id="checkAll">全选</th>
+							<th>用户名</th>
+							<th>操作</th>
+							<th>请求方法</th>
+							<th>请求参数</th>
+							<th>IP地址</th>
+							<th>执行时间</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyId">
+					    <tr>
+					       <td colspan="7">数据加载中...</td>
+					    </tr>
+					</tbody>
+				</table>
+			</div>
+			<div id="pageId" class="box-footer clearfix">
+			      
+			</div>
+			<!-- /.box-body -->
+		</div>
+		<!-- /.box -->
+	</div>
+</div>
+<script type="text/javascript">
+	// 页面加载完成后，发送AJAX请求
+	$(function(){
+		$(".btn-search").click(queryData);
+		$(".btn-delete").click(deleteRecord);
+		$("#checkAll").click(checkAll);
+				
+		// 请求page.html的内容并显示
+		var page_url="common/page";
+		// 将findPageRecords作为当前AJAX的回调函数
+		$("#pageId").load(page_url,queryData);
+	});
+	
+	function checkAll(){
+		// 获取全选按钮当前的状态
+		var flag=$("#checkAll").prop("checked");
+		
+		// 设置列表中所有checkbox的状态
+		$("#tbodyId input[type=checkbox]").each(function(){
+			$(this).prop("checked",flag);
+		});
+	}
+	
+	function deleteRecord(){
+		// 获取页面中所有被勾选的checkBox的value：array
+		var array=[];// 保存id的数组，默认为空
+		// 遍历页面中所有的checkBox
+		$("#tbodyId input[type=checkbox]").each(function(){
+			// 如果被勾选
+			// <input type="checkbox" checked="true">
+			if($(this).prop("checked")){
+				// 将checkBox的value添加到array中
+				array.push($(this).val());			
+			}
+		});
+				
+		// 判断array的长度是否为0
+		if(array.length==0){
+			// 是：弹出错误提示信息 return;
+			alert("请至少选择1条记录");
+			return;
+		}
+		
+		var del_log_url="log/delete";
+		var params={
+				"ids":array.toString() // [12,13,14] -> "12,13,14"
+		}
+		// 发送AJAX请求给服务器，执行删除操作
+		$.post(del_log_url,params,function(result){
+			// 判断result.state的值是否为20
+			if(result.state==20){
+				// 是：提示删除成功，并且更新日志列表
+				alert("删除成功！");
+				queryData();
+				// 将全选按钮恢复成未勾选状态
+				$("#checkAll").prop("checked",false);
+			}else{
+				// 否：提示服务器返回的错误信息
+				alert(result.message);				
+			}
+		});
+	}
+		
+	function queryData(){
+		findPageRecords(1);
+	}
+	
+	// 发送AJAX请求，查询页面数据的方法
+	function findPageRecords(pageCurrent){
+		// 获取页面上用户名输入框的值
+		var username=$("#searchNameId").val();// 默认是空字符串
+		
+		var log_list_url="log/findSysLog";
+		var params={
+				"username":username,
+				"currentPage":pageCurrent
+			}
+		$.getJSON(log_list_url,params,function(result){
+			if(result.state==20){// 正常响应
+				// 调用方法生成表格记录
+				createTableRows(result.data.pageRecords);
+				// 初始化分页工具栏
+				initPagination(result.data);
+			}else{// 异常响应
+				alert(result.message);
+			}
+		})
+	}
+	
+	
+	// 遍历生成表格中所有数据，并添加到表格中的方法
+	function createTableRows(pageRecords){
+		var tbody=$("#tbodyId");// 获取tbody对象
+		tbody.empty();// 清空表格中原有数据
+		for(var index in pageRecords){
+			var record=pageRecords[index]; //数组中一条记录
+			var row=createRow(record);
+			// 将该行内容添加到表格对应位置
+			tbody.append(row);
+		}
+	}
+	
+	// 拼接生成一行td内容的方法
+	function createRow(record){
+		var row="<tr>"+
+		    "<td><input type='checkbox' value='"+record.id+"'></td>"+
+			"<td>"+record.username+"</td>"+
+			"<td>"+record.operation+"</td>"+
+			"<td>"+record.method+"</td>"+
+			"<td>"+record.params+"</td>"+
+			"<td>"+record.ip+"</td>"+
+			"<td>"+record.time+"</td>"+
+		"</tr>";
+		return row;
+	}
+</script>

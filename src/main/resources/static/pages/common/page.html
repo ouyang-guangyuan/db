@@ -1,0 +1,65 @@
+<ul class="pagination pagination-sm no-margin pull-right">
+	<li><a class="first">首页</a></li>
+	<li><a class="pre">上一页</a></li>
+	<li><a class="next">下一页</a></li>
+	<li><a class="last">尾页</a></li>
+	<li><a class="rowCount">总记录数(0)</a></li>
+	<li><a class="pageCount">总页数(0)</a></li>
+	<li><a class="pageCurrent">当前页(1)</a></li>
+</ul>
+<script type="text/javascript">
+
+	$(function(){
+		// 为4个按钮添加点击事件
+		$(".first,.pre,.next,.last").click(updatePageRecords);
+	})
+	
+	// 为4个分页工具按钮添加的点击事件的处理逻辑
+	function updatePageRecords(){
+		// 获取当前的pageCurrent的值-从#pageId对象上获取
+		var pageCurrent=$("#pageId").data("pageCurrent");
+		var pageCount=$("#pageId").data("pageCount");
+		
+		// 获取当前按的是哪个按钮   this-代表当前方法调用者
+		var classValue=$(this).prop("class");
+		// 根据不同按钮执行不同的逻辑
+		switch(classValue){
+		case "first":
+				if(pageCurrent==1) return;
+				else pageCurrent=1;
+			break;
+		case "pre":
+				if(pageCurrent==1) return;
+				else pageCurrent--;
+			break;
+		case "next":
+				if(pageCurrent==pageCount) return;
+				else pageCurrent++;
+			break;
+		case "last":
+				if(pageCurrent==pageCount) return;
+				else pageCurrent=pageCount;
+			break;
+		}
+		findPageRecords(pageCurrent);
+	}
+	
+	// 初始化分页工具栏的方法
+	function initPagination(pageObject){
+		$(".rowCount").html("总记录数("+pageObject.rowCount+")");
+		$(".pageCount").html("总页数("+pageObject.pageCount+")");
+		$(".pageCurrent").html("当前页("+pageObject.currentPage+")");
+		// 将pageCurrent值绑定到#pageId对应的div上
+		$("#pageId").data("pageCurrent",pageObject.currentPage);
+		$("#pageId").data("pageCount",pageObject.pageCount);
+	}
+</script>
+
+
+
+
+
+
+
+
+

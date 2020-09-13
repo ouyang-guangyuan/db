@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.tedu.db.sys.mapper.SysUserMapper">
+
+	<!-- 基于用户id查询所有关联的角色id -->
+	<!-- List<Integer> listRoleIdByUserId(Integer userId) -->
+	<select id="listRoleIdByUserId" resultType="java.lang.Integer">
+	    select 
+	        role_id 
+	    from
+	        sys_user_roles
+	    where
+	        user_id=#{userId}
+	</select>
+
+	<!-- 基于用户名查询用户信息 -->
+	<!-- SysUserDO getUserByUsername(String username) -->
+	<select id="getUserByUsername" resultType="cn.tedu.db.sys.pojo.SysUserDO">
+	    select 
+	        * 
+	    from 
+	        sys_users
+	    where
+	        username=#{username} 
+	</select>
+
+	<!-- 添加用户信息 -->
+	<!-- int insertSysUser(SysUserDO sysUserDO) -->
+	<insert id="insertSysUser" 
+		useGeneratedKeys="true" keyProperty="id">
+		insert into sys_users(
+			username, password, salt, 
+			email, mobile, valid, 
+			deptId, createdTime, modifiedTime,
+			createdUser, modifiedUser
+		) values (
+			#{username}, #{password}, #{salt}, 
+			#{email}, #{mobile}, #{valid}, 
+			#{deptId}, now(), now(),
+			#{createdUser}, #{modifiedUser}
+		)
+	</insert>
+	
+	
+	<!-- 添加用户角色关联信息 -->
+	<!-- int insertUserRoles(@Param("userId")Integer userId, 
+			@Param("roleIds")Integer[] roleIds) -->
+	<insert id="insertUserRoles">
+		insert into sys_user_roles(
+			user_id, role_id
+		) values 
+		<foreach collection="roleIds" 
+			separator="," item="roleId"> 
+			(#{userId}, #{roleId})
+		</foreach>
+	</insert>
+
+
+	<sql id="queryWhereId">
+		<where>
+			<if test="username!=null and username!=''">
+				t1.username like concat('%',#{username},'%')
+			</if>
+		</where>
+	</sql>
+
+	<!-- 基于用户名分页查询用户信息 -->
+	<!-- List<SysUserDO> listSysUser(@Param("username")String username,
+			@Param("recordIndex")Integer recordIndex,
+			@Param("pageSize")Integer pageSize) -->
+	<select id="listSysUser" resultType="cn.tedu.db.sys.pojo.SysUserDO">
+		select 
+			t1.id, t1.username, t1.email,
+			t1.mobile, t1.valid, t1.deptId,
+			t1.createdTime, t1.modifiedTime,
+			t2.name as deptName
+		from 
+			sys_users t1 left join sys_depts t2
+		on
+			t1.deptId=t2.id
+		<include refid="queryWhereId"></include>
+		limit #{recordIndex},#{pageSize}
+	</select>
+	
+	<!-- 基于用户名查询总数据条数 -->
+	<!-- Integer getRowCount(@Param("username")String username) -->
+	<select id="getRowCount" resultType="java.lang.Integer">
+		select 
+			count(*)
+		from 
+			sys_users t1
+		<include refid="queryWhereId"></include>
+	</select>
+
+</mapper>
+

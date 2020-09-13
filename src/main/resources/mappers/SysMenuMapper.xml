@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.tedu.db.sys.mapper.SysMenuMapper">
+
+	<!-- 基于菜单id查询权限信息 -->
+	<!-- List<String> listPermissions(
+	    @Param("menuIds")Integer[] menuIds) -->
+	<select id="listPermissions" resultType="java.lang.String">
+	    select 
+	        permission
+	    from 
+	        sys_menus 
+	    where 
+	        id 
+	    in 
+	    <foreach collection="menuIds"
+	        open="(" close=")" 
+	        separator="," item="menuId">
+	        #{menuId}
+	    </foreach>
+	</select>
+
+
+	<!-- 基于菜单id查询菜单数量 -->
+	<!-- int getMenuCount(@Param("menuIds")Integer[] menuIds); -->
+	<select id="getMenuCount" resultType="int">
+		select 
+			count(*) 
+		from 
+			sys_menus
+		where id in
+		<foreach collection="menuIds" 
+			open="(" close=")" 
+			separator="," item="menuId" >
+			#{menuId}
+		</foreach>
+	</select>
+	
+	
+
+	<!-- 更新菜单信息 -->
+	<!-- int updateSysMenu(SysMenuDO sysMenuDO) -->
+	<update id="updateSysMenu">
+		update 
+			sys_menus
+		set
+			name=#{name}, url=#{url},
+			type=#{type}, sort=#{sort},
+			note=#{note}, parentId=#{parentId},
+			permission=#{permission}, modifiedTime=now(),
+			modifiedUser=#{modifiedUser} 
+		where
+			id=#{id}
+	</update>
+
+	<!-- 查询全部菜单节点信息 -->
+	<!-- List<MenuNodeVO> listMenuNode() -->
+	<select id="listMenuNode" resultType="cn.tedu.db.sys.pojo.MenuNodeVO">
+		select 
+			id,name,parentId
+		from 
+			sys_menus;
+	</select>
+	
+	<!-- 基于菜单id查询菜单信息 -->
+	<!-- SysMenuDO getSysMenu(Integer id) -->
+	<select id="getSysMenu" resultType="cn.tedu.db.sys.pojo.SysMenuDO">
+		select 
+			t1.*, t2.name as parentName
+		from 
+			sys_menus t1 left join sys_menus t2
+		on
+			t1.parentId = t2.id 
+		where 
+			t1.id=#{id}
+	</select>
+	
+	
+	
+	<!-- 添加菜单数据 -->
+	<!-- int insertSysMenu(SysMenuDO sysMenuDO) -->
+	<insert id="insertSysMenu">
+		insert into sys_menus(
+			id,name,
+			url,type,
+			sort,note,
+			parentId,permission,
+			createdTime,modifiedTime,
+			createdUser,modifiedUser
+		) values (
+			#{id},#{name},
+			#{url},#{type},
+			#{sort},#{note},
+			#{parentId},#{permission},
+			now(),now(),
+			#{createdUser},#{modifiedUser}
+		)
+	</insert>
+
+
+	<!-- 基于id获取子菜单个数 -->
+	<!-- int getSubMenuCount(Integer menuId) -->
+	<select id="getSubMenuCount" resultType="int">
+		select 
+			count(*) 
+		from 
+			sys_menus 
+		where 
+			parentId=#{menuId}
+	</select>
+	
+	<!-- 基于id删除子菜单记录 -->
+	<!-- int deleteSysMenu(Integer menuId) -->
+	<delete id="deleteSysMenu" >
+		delete from 
+			sys_menus 
+		where 
+			id=#{menuId}
+	</delete>
+	
+	<!-- 基于菜单id查询角色菜单表中对应数据条数 -->
+	<!-- int getRoleMenuCount(Integer menuId) -->
+	<select id="getRoleMenuCount" resultType="int">
+		select 
+			count(*) 
+		from 
+			sys_role_menus 
+		where 
+			menu_id=#{menuId}
+	</select>
+	
+	<!-- 基于菜单id删除角色菜单表中数据 -->
+	<!-- int deleteRoleMenu(Integer menuId) -->
+	<delete id="deleteRoleMenu">
+		delete from 
+			sys_role_menus 
+		where 
+			menu_id=#{menuId}
+	</delete>
+	
+	<!-- 查询全部菜单信息 -->
+	<!-- List<SysMenuDO> listSysMenu() -->
+	<select id="listSysMenu" resultType="cn.tedu.db.sys.pojo.SysMenuDO">
+		select 
+			t1.*, t2.name as parentName
+		from
+			sys_menus t1 left join sys_menus t2
+		on 
+			t1.parentId=t2.id
+	</select>
+
+</mapper>

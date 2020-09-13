@@ -1,0 +1,212 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="box">
+			<div class="box-header">
+				<h3 class="box-title">
+				
+				菜单管理</h3>
+
+				<div class="box-tools">
+					<div class="input-group input-group-sm" style="width: 100px;">
+						<div class="input-group-btn">
+						
+							<button type="button" class="btn btn-default btn-delete">删除</button>
+							<button type="button" class="btn btn-default btn-add">添加</button>
+							<button type="button" class="btn btn-default btn-update">修改</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /.box-header -->
+		<div class="box-body table-responsive no-padding">
+          <table id="menuTable" class="table table-hover">
+        	<thead>
+	        <tr>
+		      <th data-field="selectItem" data-checkbox="true"></th>
+	        </tr>
+	       </thead>
+         </table>
+        </div>
+		</div>
+		<!-- /.box -->
+	</div>
+</div>
+<script type="text/javascript" src="bower_components/treegrid/jquery.treegrid.extension.js"></script>
+<script type="text/javascript" src="bower_components/treegrid/jquery.treegrid.min.js"></script>
+<script type="text/javascript" src="bower_components/treegrid/tree.table.js"></script>
+<script type="text/javascript">
+
+	$(function(){
+		doGetObjects();
+		$(".btn-delete").click(removeSySMenu);
+		$(".btn-add").click(findMenuEditPage);
+		$(".btn-update").click(findMenuEditPage);
+	});
+	
+	function findMenuEditPage(){
+		var title;
+		// 判断是哪个按钮触发了当前方法
+		if($(this).hasClass("btn-add")){// 添加操作
+			title="添加菜单";
+		}else if($(this).hasClass("btn-update")){//更新操作
+			// 获取用户当前选择的菜单的id
+			var id=doGetCheckedId();
+			// 判断id是否存在 undefined
+			if(id==undefined){
+				// 是：提示用户先选择一个菜单，return;
+				alert("请选择要修改的菜单项");
+				return;
+			}
+			// 将menuId绑定到#mainContentId对应的组件上
+			$("#mainContentId").data("updateMenuId",id);
+			title="修改菜单";
+		}
+		// 实际发送AJAX请求，加载menu_edit.html页面
+		var url="sys/menu_edit";
+		$("#mainContentId").load(url,function(){
+			// 在请求得到menu_edit.html后，修改页面的title
+			$(".box-title").html(title);
+		});
+	}
+	
+	function removeSySMenu(){
+		// 获取用户当前选择的菜单的id
+		var id=doGetCheckedId();
+		// 判断id是否存在 undefined
+		if(id==undefined){
+			// 是：提示用户先选择一个菜单，return;
+			alert("请选择要删除的菜单项");
+			return;
+		}
+
+		// 弹出确认对话框，让用户确认是否删除
+		var flag=confirm("请确认是否删除该菜单？");
+		// 判断返回值是否为false
+		if(flag==false){
+			// 是： return;
+			return;			
+		}
+
+		var url="menu/delete";
+		var params={"menuId":id};// 一定注意变量名和Controller中方法一致
+		// 发送AJAX请求，执行删除菜单的操作
+		$.post(url,params,function(result){
+			// 判断响应状态码是否为20
+			if(result.state==20){
+				// 是：弹出删除成功的提示，刷新列表
+				alert("删除成功！");
+				doGetObjects();// 刷新列表
+			}else{
+				// 否：弹出错误提示信息
+				alert(result.message);
+			}
+		});
+	}
+	
+	//获取选中的记录的id值
+	function doGetCheckedId(){
+		//1.获取选中的记录
+		var selections=$("#menuTable")
+		//bootstrapTreeTable是treeGrid插件内部定义的jquery扩展函数
+		//getSelections为扩展函数内部要调用的一个方法
+		.bootstrapTreeTable("getSelections");
+		//2.对记录进行判定
+		console.log(selections);
+		if(selections.length==1)
+		return selections[0].id;
+	}
+	
+	
+
+	/**
+	 * 初始化表格的列
+	 */
+	var columns = [
+	{
+		field : 'selectItem',
+		radio : true
+	},
+	{
+		title : '菜单ID',
+		field : 'id',
+		align : 'center',
+		valign : 'middle',
+		width : '130px'
+	},
+	{
+		title : '菜单名称',
+		field : 'name',
+		align : 'center',
+		valign : 'middle',
+		width : '80px'
+	},
+	{
+		title : '上级菜单',
+		field : 'parentName',
+		align : 'center',
+		valign : 'middle',
+		sortable : true,
+		width : '100px'
+	},
+	{
+		title : '类型',
+		field : 'type',
+		align : 'center',
+		valign : 'middle',
+		width : '70px',
+		formatter : function(item, index) {
+			if (item.type == 1) {
+				return '<span class="label label-success">菜单</span>';
+			}
+			if (item.type == 2) {
+				return '<span class="label label-warning">按钮</span>';
+			}
+		}
+	}, 
+	{
+		title : '排序号',
+		field : 'sort',
+		align : 'center',
+		valign : 'middle',
+		sortable : true,
+		width : '70px'
+	}, 
+	{
+		title : '菜单URL',
+		field : 'url',
+		align : 'center',
+		valign : 'middle',
+	
+		width : '160px'
+	}, 
+	{
+		title : '授权标识',//要显示的标题名称
+		field : 'permission',//json串中的key
+		align : 'center',//水平居中
+		valign : 'middle',//垂直居中
+		sortable : false //是否排序
+	}];//格式来自官方demos -->treeGrid(jquery扩展的一个网格树插件)
+	
+	function doGetObjects(){
+		// 清空mainContentId绑定的所有数据
+		$("#mainContentId").removeData();
+		//1.构建table对象(bootstrap框架中treeGrid插件提供)
+		var treeTable=new TreeTable(
+				"menuTable",//tableId
+				"menu/findSysMenu",//url
+				 columns);
+		//设置从哪一列开始展开(默认是第一列)
+		//treeTable.setExpandColumn(2);
+		//2.初始化table对象(底层发送ajax请求获取数据)
+		treeTable.init();//getJSON,get(),...
+	}
+</script>
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,183 @@
+<!-- Horizontal Form -->
+ <div class="box box-info">
+      <div class="box-header with-border">
+        <h3 class="box-title">添加角色</h3>
+      </div>
+      <!-- /.box-header -->
+      <!-- form start -->
+      <form class="form-horizontal">
+        <div class="box-body">
+          <div class="form-group">
+            <label for="nameId" class="col-sm-2 control-label">名称</label>
+
+            <div class="col-sm-10">
+              <input type="text" class="form-control" name="name" id="nameId" placeholder="名称">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="noteId" class="col-sm-2 control-label">描述</label>
+
+            <div class="col-sm-10">
+              <input type="text" class="form-control" name="note" id="noteId" placeholder="描述">
+            </div>
+          </div>
+          <div class="form-group">
+				<label class="col-sm-2 control-label">授权</label>
+				<div class="col-sm-10">
+						<ul id="menuTree" class="ztree"></ul>
+				</div>
+		  </div>
+        </div>
+        <!-- /.box-body -->
+        <div class="box-footer">
+          <button type="button" class="btn btn-default btn-cancel">Cancel</button>
+          <button type="button" class="btn btn-info pull-right btn-save">Save</button>
+        </div>
+        <!-- /.box-footer -->
+      </form>
+    </div>
+    <script type="text/javascript" src="bower_components/ztree/jquery.ztree.all.min.js"></script>
+<script type="text/javascript">
+
+$(function(){
+	doLoadZtreeNodes();
+	// 为Save和Cancel按钮添加点击事件
+	$(".box-footer")
+	.on("click",".btn-save",doSaveOrUpdate)
+	.on("click",".btn-cancel",doCancel);
+	
+	// 获取绑定在mainContentId上的roleRecord
+	var roleRecord=$("#mainContentId").data("roleRecord");
+	if(roleRecord!=undefined){
+		initUpdateEditForm(roleRecord);
+	}
+});
+
+function initUpdateEditForm(roleRecord){
+	// 回填普通表单
+	$("#nameId").val(roleRecord.name);
+	$("#noteId").val(roleRecord.note);
+	// 回填关联菜单项
+	// 发送AJAX获取角色关联的菜单id
+	var url="role/findMenu";
+	var params={"roleId":roleRecord.id};
+	$.getJSON(url,params,function(result){
+		if(result.state==20){
+			// 基于菜单id回填菜单列表
+			zTree.expandAll(true);
+			// 遍历获取到的menuIds的数组
+			for(var index in result.data){
+				// 获取zTree中menuId对应的节点
+				var node=zTree.getNodeByParam("id",result.data[index]);
+				// 设置该节点为勾选状态
+				zTree.checkNode(node,true,false);
+			}
+		}else{
+			alert(result.message);
+		}
+	});
+}
+
+function doCancel(){
+	var url="sys/role_list";
+	$("#mainContentId").load(url);
+}
+
+function doSaveOrUpdate(){
+	//1.参数(表单数据)
+	var params=doGetEditFormData();
+	
+	if(!params.name.trim()){
+		alert("角色名不能为空");
+		return;
+	}
+	if(!params.menuIds.trim()){
+		alert("请为角色赋予权限")
+		return;
+	}
+	//2.url
+	var insertUrl="role/saveSysRole";
+	var updateUrl="role/modifySysRole";
+	var url;
+	// 判断当前是添加还是更新
+	var roleRecord=$("#mainContentId").data("roleRecord");
+	if(roleRecord!=undefined){// 更新操作
+		url=updateUrl;
+		// 在参数中绑定id
+		params.id=roleRecord.id;
+	}else{
+		url=insertUrl;
+	}
+	
+    //3.ajax request
+	$.post(url,params,function(result){
+		if(result.state==20){
+		   alert("操作成功！");
+		   doCancel();// 跳转回角色列表页面
+		}else{
+		   alert(result.message);
+		}
+	})
+}
+
+function doGetEditFormData(){
+	//1.获取角色自身信息
+	var params={
+		name:$("#nameId").val(),
+		note:$("#noteId").val()
+	}
+	//2.获取选中菜单信息
+	var menuIds=[];
+	var checkedNodes=zTree.getCheckedNodes(true);
+	for(var i in checkedNodes){
+		menuIds.push(checkedNodes[i].id);
+	}
+	params.menuIds=menuIds.toString();
+	return params;
+}
+
+
+
+var zTree; //zTree是第三方扩展的一个Jquery插件
+//初始化zTree时会用到
+var setting = {
+	check:{
+		enable:true,
+		chkboxType:{"Y":"s","N":"s"}
+	}	
+	,data : {
+		simpleData : {
+			enable : true,
+			idKey : "id",  //节点数据中保存唯一标识的属性名称
+			pIdKey : "parentId",  //节点数据中保存其父节点唯一标识的属性名称
+			rootPId : null  //根节点id
+		}
+	}
+}
+
+//加载zTree菜单
+function doLoadZtreeNodes(){
+	//1.url
+	var url="menu/findMenuNode";
+	//2.request
+	$.getJSON(url,function(result){
+	 	if(result.state==20){
+			zTree=$.fn.zTree.init(
+						$("#menuTree"),
+						setting,
+						result.data);
+		}else{
+			alert(result.message);
+		}
+	});
+}
+
+</script>
+    
+    
+    
+    
+    
+    
+    
+    

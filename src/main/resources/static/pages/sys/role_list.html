@@ -1,0 +1,177 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="box">
+			<div class="box-header">
+				<h3 class="box-title">角色管理</h3>
+
+				<div class="box-tools">
+					<div class="input-group input-group-sm" style="width: 350px;">
+						<input type="text" name="table_search" id="searchNameId"
+							class="form-control pull-right" placeholder="角色名">
+
+						<div class="input-group-btn">
+							<button type="button" class="btn btn-default btn-search">
+                                <i class="fa fa-search"></i>
+							</button>
+							<button type="button" class="btn btn-default btn-add">添加</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /.box-header -->
+			<div class="box-body table-responsive no-padding">
+				<form>
+				  <table class="table table-hover">
+					<thead>
+						<tr>
+						    <th>序号</th>
+							<th>角色名称</th>
+							<th>备注</th>
+							<th>创建时间</th>
+							<th>修改时间</th>
+							<th>创建用户</th>
+							<th>修改用户</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyId">
+					</tbody>
+				  </table>
+				</form>
+			</div>
+			<!-- /.box-body -->
+			<div id="pageId" class="box-footer clearfix">
+            </div>
+		</div>
+		<!-- /.box -->
+	</div>
+</div>
+<script type="text/javascript">
+	// 页面加载完成后，发送AJAX请求
+	$(function(){
+		$(".btn-search").click(queryData);
+		// 请求page.html的内容并显示
+		var page_url="common/page";
+		// 将findPageRecords作为当前AJAX的回调函数
+		$("#pageId").load(page_url,queryData);
+		
+		// 为delete按钮添加点击事件
+		$("#tbodyId").on("click",".btn-delete",removeSysRole);
+		
+		$(".btn-add").click(function(){
+			var role_edit="sys/role_edit";
+			$("#mainContentId").load(role_edit);
+		});
+		
+		// 为delete按钮添加点击事件
+		$("#tbodyId").on("click",".btn-update",getEditPage);
+	});
+	
+	function getEditPage(){
+		// 从tr上获取之前绑定的该行记录
+		var roleRecord=$(this).parents("tr").data("record");
+		// 将当前行的角色数据绑定到mainContentId上
+		$("#mainContentId").data("roleRecord",roleRecord);
+		
+		var url="sys/role_edit";
+		$("#mainContentId").load(url,function(){
+			// 修改新页面的标题
+			$(".box-title").html("修改角色");
+		});
+	}
+	
+	function removeSysRole(){
+		// 弹出确认对话框
+		var flag=confirm("请确认是否删除该记录？");
+		if(flag==false){ // 不删除
+			return;
+		}
+		
+		// 获取当前delete对应的roleId
+		var roleId=$(this).parents("tr").data("roleId");
+		var delete_url="role/delete";
+		var params={"roleId":roleId}
+		$.post(delete_url,params,function(result){
+			if(result.state==20){
+				alert("角色删除成功！");
+				queryData();// 刷新列表
+			}else{
+				alert(result.message);
+			}
+		});
+	}
+		
+	function queryData(){
+		findPageRecords(1);
+	}
+	
+	// 发送AJAX请求，查询页面数据的方法
+	function findPageRecords(pageCurrent){
+		// 清除mainContentId上绑定的数据
+		$("#mainContentId").removeData();
+		
+		// 获取页面上用户名输入框的值
+		var name=$("#searchNameId").val();// 默认是空字符串
+		
+		var role_list_url="role/findSysRole";
+		var params={
+				"name":name,
+				"currentPage":pageCurrent
+			}
+		$.getJSON(role_list_url,params,function(result){
+			if(result.state==20){// 正常响应
+				// 调用方法生成表格记录
+				createTableRows(result.data.pageRecords);
+				// 初始化分页工具栏
+				initPagination(result.data);
+			}else{// 异常响应
+				alert(result.message);
+			}
+		})
+	}
+	
+	// 遍历生成表格中所有数据，并添加到表格中的方法
+	function createTableRows(pageRecords){
+		var tbody=$("#tbodyId");// 获取tbody对象
+		tbody.empty();// 清空表格中原有数据
+		for(var index in pageRecords){
+			var record=pageRecords[index]; //数组中一条记录
+			var row=createRow(record);
+			// 将该行内容添加到表格对应位置
+			tbody.append(row);
+		}
+	}
+	
+	// 拼接生成一行td内容的方法
+	function createRow(record){
+		var row="<tr>"+
+		    "<td>"+record.id+"</td>"+
+			"<td>"+record.name+"</td>"+
+			"<td>"+record.note+"</td>"+
+			"<td>"+record.createdTime+"</td>"+
+			"<td>"+record.modifiedTime+"</td>"+
+			"<td>"+record.createdUser+"</td>"+
+			"<td>"+record.modifiedUser+"</td>"+
+			"<td><a class='btn-delete'>delete</a> <a class='btn-update'>update</a></td>"+
+		"</tr>";
+		// 将row字符串变成jQuery对象
+		var rowObj=$(row);
+		// 将菜单id绑定到row对象上
+		rowObj.data("roleId",record.id);
+		// 将整行数据的内容绑定到rowObj上
+		rowObj.data("record",record);
+		// 将row对象返回给方法调用者
+		return rowObj;
+	}
+</script>
+
+
+
+
+
+
+
+
+
+
+
